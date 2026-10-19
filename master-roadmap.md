@@ -60,17 +60,32 @@
 ## 4. Networking
 *Going much deeper than basic definitions.*
 
-### Part 1: Addressing & Local Networks
-* **Session 1:** IP (IPv4 / IPv6), MAC addresses, ARP
-* **Session 2:** DHCP, Routers, Switching, Routing
+### Part 1: Networking Foundations
+* **Session 1:** Network basics, nodes, NICs, cables, Layer 1
+* **Session 2:** Ethernet, MAC addresses, frames, hubs, switches
+* **Session 3:** Routers and connecting networks
+* **Session 4:** How all network components work together
 
-### Part 2: Transport & Flow
-* **Session 3:** TCP, UDP, Ports, Sockets
-* **Session 4:** Packet flow, NAT, Firewalls
+### Part 2: Addressing & Local Networks
+* **Session 5:** IPv4, IPv6, subnet masks, CIDR
+* **Session 6:** Local vs. remote communication, default gateway
+* **Session 7:** ARP and IPv6 Neighbor Discovery
+* **Session 8:** DHCP
 
-### Part 3: Web & Scale
-* **Session 5:** DNS, HTTP, HTTPS, TLS
-* **Session 6:** Proxies, Load balancers, CDN
+### Part 3: Routing & Packet Flow
+* **Session 9:** Routing tables and route selection
+* **Session 10:** Packet flow, encapsulation, MTU, TTL
+* **Session 11:** NAT and firewalls
+
+### Part 4: Transport & Applications
+* **Session 12:** TCP and UDP
+* **Session 13:** Ports and sockets
+* **Session 14:** DNS
+* **Session 15:** HTTP, HTTPS, TLS
+
+### Part 5: Networking at Scale
+* **Session 16:** Proxies and load balancers
+* **Session 17:** CDN, caching, redundancy, and failover
 
 *Data Flow Path:* Browser $\rightarrow$ DNS $\rightarrow$ IP $\rightarrow$ Router $\rightarrow$ NAT $\rightarrow$ Internet $\rightarrow$ Load Balancer $\rightarrow$ Server $\rightarrow$ Application
 
