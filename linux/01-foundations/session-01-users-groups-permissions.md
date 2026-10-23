@@ -1,4 +1,4 @@
-# Session 1: Users and Groups
+# Session 1: Users, Groups and Permissions
 
 ## 1. Inspecting User Information
 
@@ -1081,7 +1081,7 @@ When a user cannot access a file:
 
 # Session 1 Completion
 
-**Session 1 — Users, Groups, and Permissions — is complete.**
+**Session 1 — Users, Groups and Permissions — is complete.**
 
 Topics covered:
 

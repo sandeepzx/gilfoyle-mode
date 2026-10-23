@@ -33,6 +33,7 @@ gilfoyle/
 │
 ├── cs-fundamentals/
 │   ├── 01-system-architecture-memory/
+│   │   └── session-01-memory-stack-heap.md
 │   ├── 02-concurrency-operating-systems/
 │   └── 03-algorithmic-foundations/
 │
@@ -50,9 +51,12 @@ gilfoyle/
 │   └── 04-connectivity-automation/
 │
 ├── networking/
-│   ├── 01-addressing-local-networks/
-│   ├── 02-transport-flow/
-│   └── 03-web-scale/
+│   ├── 01-networking-foundations/
+│   │   ├── session-01-network-basics.md
+│   │   └── session-02-mac-address-hub-switch.md
+│   ├── 02-addressing-local-networks/
+│   ├── 03-transport-flow/
+│   └── 04-web-scale/
 │
 ├── dsa-algorithms/
 │
