@@ -53,7 +53,8 @@ gilfoyle/
 ├── networking/
 │   ├── 01-networking-foundations/
 │   │   ├── session-01-network-basics.md
-│   │   └── session-02-mac-address-hub-switch.md
+│   │   ├── session-02-mac-address-hub-switch.md
+│   │   └── session-03-routers-and-connecting-networks
 │   ├── 02-addressing-local-networks/
 │   ├── 03-transport-flow/
 │   └── 04-web-scale/
