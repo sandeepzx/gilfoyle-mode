@@ -33,7 +33,8 @@ gilfoyle/
 │
 ├── cs-fundamentals/
 │   ├── 01-system-architecture-memory/
-│   │   └── session-01-memory-stack-heap.md
+│   │   ├── session-01-memory-stack-heap.md
+│   │   └── session-02-cpu-basics-processes.md
 │   ├── 02-concurrency-operating-systems/
 │   └── 03-algorithmic-foundations/
 │
