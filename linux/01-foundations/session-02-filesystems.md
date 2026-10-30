@@ -1,0 +1,1461 @@
+# Session 2: Filesystems
+
+## 1. What Is a Filesystem?
+
+A filesystem is a method used by an operating system to organize, store, retrieve, and manage data on a storage device.
+
+A storage device provides space for storing data, but the operating system needs a way to organize that space into files and directories.
+
+A filesystem provides structures and rules for managing:
+
+- File contents
+- File and directory names
+- File metadata
+- Directory relationships
+- Free and occupied storage space
+- Access to stored data
+
+### Why Filesystems Exist
+
+Imagine storing thousands of documents on a disk without filenames, directories, or any structure for locating them.
+
+The system would need another way to determine where each document starts and ends and how to retrieve it.
+
+A filesystem provides the organization needed to manage this data.
+
+### The Basic Relationship
+
+```text
+Storage Device
+    |
+    v
+Partition (optional)
+    |
+    v
+Filesystem
+    |
+    v
+Files and Directories
+```
+
+This is a common arrangement, not a mandatory structure for every storage configuration. A filesystem can also be created directly on a device or provided by a virtual or network-backed system.
+
+### Important Distinction
+
+- **Storage device:** Provides storage capacity.
+- **Partition:** Defines a region of a partitioned storage device.
+- **Filesystem:** Organizes data within a storage area.
+- **File:** Represents a named filesystem object that can contain data.
+- **Directory:** Organizes names and references to filesystem objects.
+
+
+## 2. Files and Directories in Linux
+
+Linux organizes files and directories into a hierarchical tree.
+
+Unlike systems that organize storage around separate drive letters, Linux presents filesystems through a common directory hierarchy.
+
+The top of this hierarchy is `/`, called the root directory.
+
+### Example Directory Tree
+
+```text
+/
+├── home
+│   └── sandeep
+│       ├── Documents
+│       ├── Downloads
+│       └── project
+│           └── app.py
+├── etc
+├── var
+├── tmp
+├── usr
+├── dev
+├── proc
+└── sys
+```
+
+The actual contents depend on the system.
+
+### Inspecting Directories
+
+```bash
+pwd
+ls
+ls -l
+ls -la
+```
+
+- `pwd` displays the current working directory.
+- `ls` lists directory entries.
+- `ls -l` displays detailed information.
+- `ls -la` also displays hidden entries.
+
+### Hidden Files
+
+In Linux, filenames beginning with a dot are normally hidden from ordinary `ls` output.
+
+For example:
+
+```text
+.bashrc
+.profile
+.config
+```
+
+These are still filesystem entries. The leading dot affects how they are displayed by common tools, not whether they exist.
+
+### Directories and Their Contents
+
+A directory does not simply act as a container in the same way a physical box does. Filesystems maintain directory entries that associate names with filesystem objects.
+
+This distinction becomes important when studying inodes and hard links.
+
+
+## 3. The Linux Filesystem Hierarchy
+
+Linux places files and resources in standard locations.
+
+The Filesystem Hierarchy Standard provides conventions for many of these locations, although individual distributions can differ.
+
+### `/` — Root Directory
+
+The root directory is the starting point of the Linux directory tree.
+
+All paths begin from this hierarchy, including paths belonging to mounted filesystems.
+
+### `/home` — User Directories
+
+Contains users' personal directories.
+
+Example:
+
+```text
+/home/sandeep
+```
+
+User documents, downloads, and personal project files are commonly stored here.
+
+### `/etc` — Configuration
+
+Contains system-wide configuration files and directories.
+
+Examples:
+
+```text
+/etc/passwd
+/etc/fstab
+/etc/logrotate.conf
+```
+
+These files configure different aspects of the operating system.
+
+### `/var` — Variable Data
+
+Contains data that changes as the system operates.
+
+Examples include:
+
+```text
+/var/log
+/var/cache
+/var/lib
+```
+
+The exact contents depend on installed software.
+
+### `/tmp` — Temporary Files
+
+Provides a location for temporary files.
+
+Applications may use it for intermediate data. Files may be removed automatically according to system policies.
+
+Do not assume every file in `/tmp` disappears immediately after a reboot.
+
+### `/usr` — Programs and Shared Resources
+
+Contains many installed programs, libraries, documentation files, and other resources.
+
+Examples:
+
+```text
+/usr/bin
+/usr/lib
+/usr/share
+```
+
+Despite the name, `/usr` is not simply the home directory of ordinary users.
+
+### `/dev` — Device Files
+
+Contains device nodes through which programs can access supported devices and kernel interfaces.
+
+Examples:
+
+```text
+/dev/null
+/dev/zero
+/dev/sda
+```
+
+The available devices depend on the machine. Some entries are created dynamically.
+
+### `/proc` — Process and Kernel Information
+
+Provides a virtual filesystem exposing process and kernel information.
+
+Example:
+
+```bash
+cat /proc/cpuinfo
+```
+
+The information shown is generated by the kernel rather than stored as ordinary documents on a disk.
+
+### `/sys` — Device and Kernel Interfaces
+
+Provides a virtual filesystem exposing information about devices, drivers, and kernel objects.
+
+It is useful for inspecting relationships between devices and the kernel.
+
+### Inspecting the Hierarchy
+
+```bash
+ls /
+ls /var
+ls /etc
+```
+
+To inspect a directory itself rather than its contents:
+
+```bash
+ls -ld /var
+```
+
+### Important Mental Model
+
+Not everything under `/` is an ordinary file stored on the root disk.
+
+For example, `/proc` and `/sys` expose kernel-maintained information. Mounted filesystems can also make storage from another device appear within the same directory tree.
+
+
+## 4. Absolute and Relative Paths
+
+A path identifies a location in the filesystem hierarchy.
+
+Linux supports absolute and relative paths.
+
+### Absolute Paths
+
+An absolute path starts from `/`.
+
+Example:
+
+```text
+/home/sandeep/Documents/report.txt
+```
+
+Its meaning does not depend on the current working directory.
+
+### Relative Paths
+
+A relative path is interpreted from the current working directory.
+
+Suppose the current directory is:
+
+```text
+/home/sandeep
+```
+
+Then:
+
+```bash
+cd Documents
+```
+
+refers to:
+
+```text
+/home/sandeep/Documents
+```
+
+### Special Path Components
+
+- `.` represents the current directory.
+- `..` represents the parent directory.
+
+Examples:
+
+```bash
+pwd
+cd ..
+cd .
+cd ~/Documents
+```
+
+The shell normally expands `~` to the current user's home directory.
+
+### Path Resolution Example
+
+Suppose the current directory is:
+
+```text
+/home/sandeep/project
+```
+
+The relative path:
+
+```text
+../Documents/report.txt
+```
+
+resolves to:
+
+```text
+/home/sandeep/Documents/report.txt
+```
+
+### Important Distinction
+
+The shell interprets commands and expands expressions such as `~`. The operating system then resolves the resulting pathname during filesystem operations.
+
+
+## 5. File Descriptors and Inodes
+
+Linux uses several related concepts when working with files.
+
+A filename, an inode, and a file descriptor are not the same thing.
+
+### Filenames
+
+A filename is a name associated with a filesystem object through a directory entry.
+
+For example:
+
+```text
+report.txt
+```
+
+The name helps users and programs locate the object.
+
+### Inodes
+
+On traditional Unix-like filesystems, an inode stores metadata about a filesystem object.
+
+Depending on the filesystem, inode metadata can include:
+
+- File type
+- Ownership
+- Permissions
+- Timestamps
+- File size
+- References to the file's data
+
+The filename itself is stored in a directory entry, not as the defining identity inside the inode.
+
+### Inspecting Inodes
+
+```bash
+ls -i report.txt
+stat report.txt
+```
+
+`ls -i` displays the inode number. `stat` displays detailed information about the object.
+
+### File Descriptors
+
+A file descriptor is a small integer used by a process to refer to an open file or another I/O resource.
+
+Common standard descriptors are:
+
+| Descriptor | Meaning |
+|---|---|
+| `0` | Standard input |
+| `1` | Standard output |
+| `2` | Standard error |
+
+When a process opens a file, the kernel establishes the necessary open-file state and returns a file descriptor to the process.
+
+### Relationship
+
+```text
+Filename
+   |
+   v
+Directory Entry
+   |
+   v
+Inode
+   |
+   v
+File Data
+
+Process
+   |
+   v
+File Descriptor
+   |
+   v
+Open-File State
+   |
+   v
+Underlying Filesystem Object
+```
+
+This is a conceptual diagram. Exact internal structures vary by operating system and filesystem.
+
+### Important Distinction
+
+- A filename is used to locate an object.
+- An inode identifies a filesystem object within a filesystem.
+- A file descriptor is a process-level reference to an open resource.
+
+A file can have multiple names, and a process can keep a file open even after one of its names is removed.
+
+
+## 6. Hard Links and Symbolic Links
+
+Links allow filesystem objects to be accessed through different names or paths.
+
+Linux supports hard links and symbolic links.
+
+### Hard Links
+
+A hard link creates another directory entry referring to the same underlying inode.
+
+Example:
+
+```bash
+ln original.txt hardlink.txt
+```
+
+Both names refer to the same filesystem object.
+
+If the contents are modified through one name, the change is visible through the other name because both names refer to the same object.
+
+Removing one name does not remove the underlying data while other hard links or open references still keep the object alive.
+
+Hard links generally cannot cross filesystem boundaries. Creating hard links to directories is also normally restricted.
+
+### Symbolic Links
+
+A symbolic link is a separate filesystem object that stores a path referring to another location.
+
+Example:
+
+```bash
+ln -s original.txt symlink.txt
+```
+
+The symbolic link points to the pathname `original.txt`.
+
+If the target is moved or deleted, the symbolic link may no longer resolve successfully.
+
+### Inspecting Links
+
+```bash
+ls -li
+stat original.txt
+readlink symlink.txt
+```
+
+### Comparison
+
+| Property | Hard Link | Symbolic Link |
+|---|---|---|
+| Refers to | Same underlying inode | A pathname |
+| Separate inode | No, on the same filesystem | Yes |
+| Can cross filesystems | Generally no | Yes |
+| Can point to a directory | Normally restricted | Yes |
+| Can become broken when target name is removed | No, if another hard link remains | Yes |
+
+### Important Mental Model
+
+A hard link is another name for the same filesystem object. A symbolic link is a separate object that refers to a path.
+
+## 7. File Metadata
+
+Metadata describes a filesystem object rather than its ordinary contents.
+
+Common metadata includes:
+
+- File type
+- Permissions
+- Owner and group
+- Size
+- Timestamps
+- Inode number
+- Link count
+
+### Inspecting Metadata
+
+```bash
+stat report.txt
+ls -l report.txt
+ls -lh report.txt
+```
+
+### Reading `ls -l` Output
+
+Example:
+
+```text
+-rw-r----- 1 sandeep developers 120 Oct 29 10:00 report.txt
+```
+
+The fields represent:
+
+1. File type and permissions
+2. Hard-link count
+3. Owner
+4. Group
+5. Size in bytes
+6. Modification time
+7. Filename
+
+### Common Timestamps
+
+- **Modification time (`mtime`):** When file contents were last modified.
+- **Status-change time (`ctime`):** When inode status information last changed.
+- **Access time (`atime`):** When file contents were last accessed, subject to filesystem and mount policies.
+
+`ctime` does not mean creation time.
+
+### Important Distinction
+
+Metadata can change without the file's ordinary contents changing. For example, changing ownership or permissions changes metadata.
+
+
+## 8. Disk Usage and File Sizes
+
+Linux provides several commands for examining storage consumption.
+
+### `df` — Filesystem Space
+
+```bash
+df -h
+df -h /
+```
+
+Displays filesystem capacity, used space, available space, and usage percentage.
+
+### `du` — Directory and File Usage
+
+```bash
+du -sh ~/Downloads
+du -ah /var/log | sort -h | tail -15
+```
+
+- `du` estimates space used by files and directories.
+- `-s` displays a summary.
+- `-h` uses human-readable units.
+- `-a` includes files as well as directories.
+
+Administrative permissions may be needed to inspect protected locations fully.
+
+### `ls -lh` — File Sizes
+
+```bash
+ls -lh report.txt
+```
+
+Displays a file's reported size in a human-readable format.
+
+## 9. Apparent Size Versus Disk Space Consumed
+
+A file's logical size and the amount of filesystem storage allocated to it are not always the same.
+
+Useful commands:
+
+```bash
+ls -lh filename
+du -h filename
+du -sh directory/
+df -h
+df -i
+```
+
+- `ls -lh` displays the file's logical size in a human-readable format.
+- `du -h` estimates disk usage attributable to a file or directory.
+- `du -sh` summarizes a directory.
+- `df -h` reports filesystem space usage.
+- `df -i` reports inode usage.
+
+### Why can the numbers differ?
+
+Filesystem storage is allocated in blocks or other allocation units. A file generally cannot consume a fractional ordinary allocation block just because its contents are small.
+
+For example, suppose a filesystem uses 4 KiB blocks and a regular file contains 12 bytes.
+
+Its logical size is:
+
+\[
+12\text{ bytes}
+\]
+
+If one 4 KiB data block is allocated, its allocated data space is approximately:
+
+\[
+1 \times 4096 = 4096\text{ bytes}
+\]
+
+That is about 4 KiB of allocated data for only 12 bytes of content.
+
+The allocation overhead in this example is:
+
+\[
+4096-12=4084\text{ bytes}
+\]
+
+This illustrates why a tiny file can occupy a full allocation block.
+
+**Important:** The exact block size and allocation behavior depend on the filesystem and its configuration. A 12-byte file does not universally consume eight blocks or any fixed number of blocks. Metadata, directory entries, filesystem features and reporting methods can also affect the numbers.
+
+Inspect a file with:
+
+```bash
+stat filename
+du -B1 filename
+du -h filename
+```
+
+`stat` can show both logical size and the number of allocated 512-byte units reported by the filesystem interface. `du -B1` reports usage in bytes according to `du`'s accounting.
+
+### Sparse files
+
+A sparse file can have a large logical size without allocating storage for every region.
+
+For example, a program may create a file with a large empty region. The logical size may be several gigabytes while the actual allocated storage is much smaller.
+
+Therefore:
+
+**Logical size is not always equal to physical storage consumed.**
+
+### Filesystem space versus inode exhaustion
+
+A filesystem can run out of data blocks or run out of available inodes.
+
+That is why both commands can matter:
+
+```bash
+df -h
+df -i
+```
+
+A system may have free bytes but still fail to create files if it has exhausted its available inodes.
+
+
+### Important Distinction: `df` Versus `du`
+
+`df` reports space usage from the filesystem's perspective. `du` estimates usage by traversing visible filesystem objects.
+
+Their results can differ because of deleted-but-open files, filesystem metadata, permissions, snapshots, and other filesystem-specific behavior.
+
+## 10. Disks, Partitions, and Filesystems
+
+These concepts describe different layers of storage.
+
+### Disk
+
+A physical storage device, such as an SSD, provides persistent storage capacity.
+
+Linux can also work with virtual block devices and other storage abstractions.
+
+### Partition
+
+A partition defines a region of a partitioned storage device.
+
+A disk may contain one or several partitions, depending on its configuration.
+
+### Filesystem
+
+A filesystem organizes data within a storage area.
+
+Examples include ext4, XFS, and Btrfs.
+
+### Common Arrangement
+
+```text
+Physical SSD
+    |
+    v
+Partition Table
+    |
+    v
+Partition
+    |
+    v
+Filesystem
+    |
+    v
+Mounted Directory
+    |
+    v
+Files and Directories
+```
+
+This is a common arrangement, not the only possible one. Linux can also use filesystems directly on devices, logical volumes, encrypted devices, network storage, and other configurations.
+
+### Important Distinction
+
+A partition is not itself a filesystem. A partition can contain a filesystem, but its contents depend on how it has been configured.
+
+## 11. Mounting and Unmounting
+
+Linux presents filesystems through a unified directory hierarchy.
+
+Mounting connects a filesystem to a directory known as a mount point.
+
+### Example
+
+Suppose a separate filesystem is mounted at:
+
+```text
+/mnt/data
+```
+
+Its contents become accessible through that directory.
+
+The filesystem does not have to be physically located on the same disk as the root filesystem.
+
+### Inspecting Mounts
+
+```bash
+findmnt
+findmnt /
+findmnt /home
+```
+
+These commands display mounted filesystems and their relationships to mount points.
+
+### Unmounting
+
+The `umount` command detaches a mounted filesystem from a mount point.
+
+Example:
+
+```bash
+sudo umount /mnt/data
+```
+
+This is only an example. Do not unmount a real filesystem unless you know what depends on it and have verified the correct mount point.
+
+### Why Unmounting Can Fail
+
+A filesystem may be busy because processes have open files, current working directories, or other references within the mount.
+
+### Important Mental Model
+
+Mounting makes a filesystem accessible at a location in the directory tree. It does not necessarily copy or move the files into that directory.
+
+## 12. Inspecting Storage Devices
+
+Linux provides commands to inspect storage devices, partitions, filesystem identifiers, and mounts.
+
+### `lsblk`
+
+```bash
+lsblk
+lsblk -f
+```
+
+Lists block devices and, with `-f`, displays filesystem-related information where available.
+
+### `blkid`
+
+```bash
+sudo blkid
+```
+
+Displays recognized block-device attributes, such as filesystem type and UUID.
+
+### `findmnt`
+
+```bash
+findmnt
+findmnt -t ext4
+```
+
+Displays mounted filesystems and their mount points.
+
+### What Each Command Answers
+
+| Command | Main purpose |
+|---|---|
+| `lsblk` | What block devices and partitions exist? |
+| `blkid` | What filesystem identifiers and types are recognized? |
+| `findmnt` | What is mounted, and where? |
+| `df -h` | How much space is used and available? |
+| `du -sh path` | How much space does a directory tree use? |
+
+These commands provide complementary views of storage.
+
+## 13. Persistent Mounts and `/etc/fstab`
+
+Linux can configure filesystems to mount automatically during startup.
+
+The `/etc/fstab` file describes filesystems and the options used to mount them.
+
+### Example Entry
+
+```text
+UUID=example-uuid /mnt/data ext4 defaults 0 2
+```
+
+This is an illustrative entry, not a real configuration to copy.
+
+The fields are:
+
+1. Filesystem specification
+2. Mount point
+3. Filesystem type
+4. Mount options
+5. Dump-related field
+6. Filesystem-check ordering field
+
+### Why UUIDs Are Useful
+
+Device names such as `/dev/sda1` can change depending on the system and device discovery order.
+
+A filesystem UUID provides a more stable identifier for referencing a filesystem.
+
+### Inspecting the Configuration
+
+```bash
+cat /etc/fstab
+```
+
+To inspect the current mount state:
+
+```bash
+findmnt
+```
+
+### Important Caution
+
+An incorrect `/etc/fstab` entry can cause mount failures and may interfere with booting normally.
+
+Always verify the filesystem UUID, filesystem type, mount point, and options before changing persistent mount configuration.
+
+## 14. Finding Files
+
+Linux provides different tools for finding files and locating executables.
+
+### `find`
+
+Searches directory trees based on conditions.
+
+Example:
+
+```bash
+find ~/Documents -type f
+```
+
+Finds regular files under `~/Documents`.
+
+Search by filename:
+
+```bash
+find ~/Documents -name "*.pdf"
+```
+
+Search for directories:
+
+```bash
+find ~/Documents -type d
+```
+
+### `locate`
+
+Searches a filename database when the utility and its database are available.
+
+Example:
+
+```bash
+locate report.txt
+```
+
+Because it relies on an index, recent changes may not appear until the database is updated.
+
+### `which`
+
+Locates an executable selected through the current `PATH`.
+
+Example:
+
+```bash
+which python3
+```
+
+It is not a general-purpose search for arbitrary files.
+
+### Comparison
+
+| Command | Main purpose |
+|---|---|
+| `find` | Search filesystem paths using specified conditions |
+| `locate` | Search an indexed filename database |
+| `which` | Locate an executable through `PATH` |
+
+
+## 14. Why Deleting a File May Not Free Space Immediately
+
+A filename can be removed while a process still has the file open.
+
+On Unix-like systems, deleting the last directory entry does not necessarily destroy the underlying file immediately. If a process still holds an open reference, the file's data can remain allocated until that reference is released.
+
+This explains a common puzzle:
+
+- `du` does not show the deleted file under its former name.
+- `df` still reports the storage as occupied.
+
+Inspect deleted-but-open files with:
+
+```bash
+sudo lsof +L1
+```
+
+If an application is holding a large deleted log open, the storage may be released when the process closes it. Restarting a service can sometimes release the reference, but only after identifying the relevant process and understanding the service's role.
+
+Do not kill processes indiscriminately just to reclaim space.
+
+## 15. Investigating Unexpected Disk Usage
+
+The important skill is to work from evidence toward a cause rather than deleting files at random.
+
+A practical investigation can follow this sequence:
+
+### Step 1: Establish the scope
+
+```bash
+df -h
+df -i
+lsblk -f
+findmnt
+```
+
+Questions:
+
+- Which filesystem is running low?
+- Is the problem space usage or inode exhaustion?
+- Which device or storage arrangement backs the filesystem?
+- Are there separate filesystems for directories such as `/home` or `/var`?
+
+### Step 2: Locate large directories and files
+
+```bash
+sudo du -xhd1 /var
+sudo du -xhd1 /var/log
+sudo find /var/log -type f -size +100M -ls
+```
+
+The `-x` option keeps `du` on the same filesystem, helping prevent unrelated mounted filesystems from distorting the investigation.
+
+### Step 3: Compare different views of storage
+
+If `df` reports much more usage than expected from `du`, consider:
+
+- Deleted-but-open files.
+- Files hidden beneath mount points.
+- Filesystem metadata and reserved space.
+- Sparse files and differences in allocation accounting.
+- Files or directories that could not be inspected because of permissions.
+
+### Step 4: Understand the cause before changing anything
+
+A large file is evidence, not automatically a problem. Logs, databases and application data may be large for legitimate reasons.
+
+Inspect the file's identity, purpose, age, ownership and relationship to the running system before deciding whether to compress, rotate, archive or remove it.
+
+During the storage investigation, we examined Snap packages and the way their revisions occupy disk space.
+
+## 16. Why Snap Can Keep Multiple Revisions
+
+Snap packages use revisions to represent installed versions of an application.
+
+When an application updates, Snap may download and install a new revision while retaining an older revision for rollback. The previous revision can be disabled rather than immediately removed.
+
+This means a system can contain several revisions of the same application:
+
+- An active revision.
+- A newer or older revision that is disabled.
+- Revisions retained for rollback or other package-management purposes.
+
+The exact revisions and their status depend on the package and the system's update history.
+
+## 17. Inspecting Snap Revisions
+
+Start by listing installed snaps:
+
+```bash
+snap list --all
+```
+
+The output includes revision and status information. Pay attention to entries marked `disabled`.
+
+A simplified example:
+
+```text
+Name       Version    Rev    Tracking       Publisher   Notes
+example    2.1        120    latest/stable  publisher   -
+example    2.0        110    latest/stable  publisher   disabled
+```
+
+This example illustrates the relationship between an active revision and an older disabled revision. It is not a record of the exact packages on the machine.
+
+### Understanding the important terms
+
+- **Revision:** A particular installed build of a Snap package.
+- **Active:** The revision currently selected for normal use.
+- **Disabled:** An installed revision that is not currently active.
+- **Rollback:** Returning to a previous revision when necessary.
+
+The key point is that an update does not always mean the previous revision's storage disappears immediately.
+
+## 18. Safely Removing Old Disabled Revisions
+
+When investigating Snap storage, we identify apps that have multiple installed revisions and remove old disabled revisions when appropriate.
+
+### Step 1: List installed Snap revisions
+
+```bash
+snap list --all
+```
+
+This displays installed Snap packages, including their revisions and status.
+
+### Step 2: Filter for the specific app
+
+For example, our output showed two revisions of the `code` app:
+
+```bash
+snap list --all | grep '^code '
+```
+
+Output:
+
+```text
+code    e6468682    273    latest/stable    vscode✓    classic
+code    07f806f9    267    latest/stable    vscode✓    disabled,classic
+```
+
+The output shows that revision `273` is active, while revision `267` is disabled.
+
+Filtering by the app name lets us inspect only the relevant revisions instead of reviewing the entire Snap package list again.
+
+### Step 3: Remove the old disabled revision
+
+After confirming the revision number, remove that specific revision:
+
+```bash
+sudo snap remove code --revision=267
+```
+
+Here, `code` is the Snap package name and `267` is the old disabled revision.
+
+### Step 4: Verify the result
+
+```bash
+snap list --all | grep '^code '
+```
+
+Confirm that revision `267` has been removed and the active revision remains installed.
+
+**Important:** Verify the app name, revision number and status before removal. Use Snap's package-management command rather than manually deleting files from Snap's storage directories.
+
+## 19. What This Investigation Taught Us
+
+The important lesson is that updating an application can leave older revisions installed, consuming additional storage.
+
+Our investigation followed this process:
+
+1. List installed Snap revisions.
+2. Filter the output for the specific app.
+3. Identify the active and disabled revisions.
+4. Remove the verified old revision.
+5. Check the result and re-evaluate storage usage.
+
+This demonstrates how to narrow a system-wide observation down to a specific package and perform a targeted cleanup instead of deleting files blindly.
+
+## 20. What Is a Log?
+
+A log is a record of events produced by the operating system, services or applications.
+
+Logs help answer questions such as:
+
+- What happened?
+- When did it happen?
+- Which component reported it?
+- Did the event repeat?
+- Did it begin after a particular change?
+- Is it still happening, or was it a historical event?
+
+Logs are useful for troubleshooting, but they are also files that consume storage. A busy system can produce large logs, and a logging or application problem can cause them to grow rapidly.
+
+## 21. Understanding Some Logs
+
+### `/var/log/syslog`
+
+On systems using traditional syslog-style logging, this file commonly contains general system and service messages.
+
+It can include messages from several components, so an error appearing here does not automatically identify the underlying cause.
+
+### `/var/log/kern.log`
+
+This file commonly contains kernel-related messages, depending on the system's logging configuration.
+
+Kernel messages can help investigate hardware, drivers, networking and other kernel-level events.
+
+### Historical or rotated logs
+
+A file such as:
+
+```text
+/var/log/syslog.1
+```
+
+is typically a rotated log containing older messages.
+
+Compressed rotated logs may have names such as:
+
+```text
+/var/log/syslog.1.gz
+```
+
+The current log and the historical log serve different purposes:
+
+- **Current log:** Helps determine what is happening now or has happened recently.
+- **Historical log:** Helps establish when a problem began, how often it occurred and whether it is recurring.
+
+The exact log files available depend on the logging system and its configuration. Some systems also use the systemd journal.
+
+## 22. How I Approached the Log Investigation
+
+The goal was to understand how logs help us investigate recurring system problems while studying filesystem storage and usage.
+
+Our approach was to identify a suspicious error, investigate its historical occurrence, check whether it was still happening, and then use that evidence to investigate the cause and verify a fix.
+
+### Stage 1: Find the large historical logs
+
+We inspected `/var/log` and found that rotated logs were consuming substantial storage.
+
+```bash
+ls -lh /var/log
+```
+
+The files we focused on included:
+
+- `/var/log/syslog.1` — approximately 1.1 GB.
+- `/var/log/kern.log.1` — approximately 771 MB.
+
+These files contained historical messages that could help us understand previous system events.
+
+### Stage 2: Inspect recent kernel messages
+
+We started by checking recent kernel messages to discover suspicious errors.
+
+```bash
+sudo journalctl -k --since "10 minutes ago" --no-pager
+```
+
+We looked for messages related to the problem being investigated, such as Wi-Fi failures, USB issues, PCIe errors, or device timeouts.
+
+For example, to filter recent messages for Wi-Fi and PCIe-related patterns:
+
+```bash
+sudo journalctl -k --since "2 minutes ago" --no-pager |
+grep -iE 'RxErr|BadDLLP|BadTLP|PCIe Bus Error|timed out waiting peer stats|ath10k'
+```
+
+We selected a relevant error signature for further investigation. The exact search terms depended on the device or problem.
+
+### Stage 3: Investigate the selected error in historical logs
+
+After selecting a suspicious error, we searched the historical kernel log to determine whether it had occurred previously.
+
+For example:
+
+```bash
+sudo grep -cE 'RxErr|BadDLLP|BadTLP|peer stats info' /var/log/kern.log.1
+```
+
+To count lines containing one specific pattern:
+
+```bash
+sudo grep -c 'RxErr' /var/log/kern.log.1
+```
+
+For errors associated with the `ath10k_pci` Wi-Fi driver:
+
+```bash
+sudo grep -cE 'ath10k_pci.*(RxErr|BadDLLP|BadTLP|Timeout)' /var/log/kern.log.1
+```
+
+We could perform the same search in the historical system log:
+
+```bash
+sudo grep -cE 'ath10k_pci.*(RxErr|BadDLLP|BadTLP|Timeout)' /var/log/syslog.1
+```
+
+These commands count matching lines, not necessarily individual error events. The results help us establish whether a pattern occurred historically and how frequently matching lines appeared.
+
+To inspect the actual messages rather than just their counts:
+
+```bash
+sudo tail -n 30 /var/log/kern.log.1
+```
+
+We use the output to identify the message, its source, and any useful context.
+
+### Stage 4: Check whether the error appears in current logs
+
+Next, we searched the current kernel log for the selected error signature.
+
+```bash
+sudo grep -iE 'RxErr|BadDLLP|BadTLP|peer stats info' /var/log/kern.log
+```
+
+For a more specific Wi-Fi driver search:
+
+```bash
+sudo grep -cE 'ath10k_pci.*(RxErr|BadDLLP|BadTLP|Timeout)' /var/log/kern.log
+```
+
+We could also search the current system log:
+
+```bash
+sudo grep -iF 'distinctive error message' /var/log/syslog
+```
+
+Replace the example text with a distinctive part of the actual message.
+
+This comparison helps answer:
+
+- Did the error occur in the past?
+- Does the same error also appear in the current log?
+- Is it potentially recurring, or does the evidence suggest it was limited to an earlier period?
+
+If a historical log has matches but the current log does not, that alone does not prove the problem has been fixed. We must also consider which time periods the logs cover and whether the relevant events were recorded.
+
+### Stage 5: Establish the timeline
+
+Counts alone do not tell us when errors occurred. We examine timestamps and surrounding messages to understand the timeline.
+
+For example, ten matching lines spread over several days represent a different pattern from ten matching lines within a few minutes.
+
+We compare the evidence:
+
+- **Past:** The error appeared in historical logs.
+- **Present:** The same error signature appears in current logs.
+- **After a change:** We check whether the error continues to recur.
+
+This helps distinguish an old event from a potentially ongoing problem.
+
+### Stage 6: Investigate the likely cause and apply a fix
+
+Once we understand the error signature, its source, and its timeline, we investigate the relevant device, driver, service, or subsystem.
+
+For example, an error mentioning `ath10k_pci` may lead us to investigate the Wi-Fi driver and related kernel messages. USB-related messages would lead us to investigate the relevant USB device or subsystem.
+
+A log message is evidence of an event, not necessarily proof of its root cause. We should not assume that the most frequent error is automatically the cause of the observed problem.
+
+We use the message, surrounding events, timing, and the actual symptoms together before deciding what action is appropriate.
+
+### Stage 7: Verify the result after the fix
+
+After applying a fix, we check recent kernel messages again.
+
+```bash
+sudo journalctl -k --since "2 minutes ago" --no-pager
+```
+
+We can filter the output for the same error signature:
+
+```bash
+sudo journalctl -k --since "2 minutes ago" --no-pager |
+grep -iE 'RxErr|BadDLLP|BadTLP|PCIe Bus Error|timed out waiting peer stats|ath10k'
+```
+
+We then check whether:
+
+1. The same error appears again.
+2. Its frequency has decreased.
+3. Related messages suggest that the problem remains.
+4. The original symptom, such as a Wi-Fi disconnection, has stopped.
+
+The observation period depends on how frequently the problem normally occurs. A few minutes without an error may be useful when it previously occurred every few seconds, but it is not enough to establish a fix for a problem that normally occurs once a day.
+
+A successful verification therefore involves checking both the logs and the original symptom over a suitable period.
+
+### The investigation pattern
+
+**Recent kernel messages → Select an error → Search historical logs → Check current logs → Establish the timeline → Investigate the cause → Apply a fix → Verify using recent logs and symptoms.**
+
+The important lesson is that logs help us move from an observed symptom to historical evidence, develop a hypothesis about the cause, and check whether our intervention actually improved the system.
+
+## 23. Why Logs Need Rotation
+
+Logs can grow continuously if they are never rotated or otherwise managed.
+
+Log rotation typically involves actions such as:
+
+1. Renaming the current log.
+2. Creating a new log file.
+3. Retaining a limited number of older logs.
+4. Optionally compressing older logs.
+5. Removing sufficiently old revisions according to policy.
+
+The exact sequence depends on the rotation rules and the application or service involved.
+
+## 24. Inspecting Log Rotation Configuration
+
+We inspected:
+
+```bash
+systemctl status logrotate.timer --no-pager
+```
+
+The timer was enabled and active. It was configured to trigger a daily check, with the actual rotation depending on the relevant log-rotation rules.
+
+We also inspected:
+
+```bash
+cat /etc/logrotate.conf
+```
+
+The global configuration included settings such as:
+
+```text
+weekly
+rotate 4
+create
+include /etc/logrotate.d
+```
+
+The global compression setting was commented out:
+
+```text
+#compress
+```
+
+These settings need to be interpreted carefully.
+
+- `weekly` specifies the global rotation interval where the rule applies.
+- `rotate 4` specifies how many rotated copies to retain where the rule applies.
+- `create` requests creation of a replacement log file after rotation, with appropriate ownership and permissions as configured.
+- `include /etc/logrotate.d` loads additional configuration files.
+- A commented-out `compress` line means that global compression is not enabled by that line.
+
+Individual files under `/etc/logrotate.d` can override or extend the global configuration. Therefore, the global configuration alone does not establish exactly how every log is handled.
+
+## 25. The Difference Between the Timer and the Rules
+
+The timer and the rotation rules have different responsibilities.
+
+- **Timer:** Determines when logrotate is invoked.
+- **Configuration:** Determines which logs are managed and what actions are applied.
+- **Rotation:** Renames or replaces logs according to the applicable rules.
+- **Compression:** Reduces the storage required by eligible historical logs.
+
+A daily timer does not necessarily mean every log is rotated daily. A rule can specify a weekly interval, a size threshold, or other conditions.
+
+Inspect a relevant rule with:
+
+```bash
+cat /etc/logrotate.d/rsyslog
+```
+
+The exact contents of that file determine the policy for the logs it manages.
+
+## 26. Compressing the Large Historical Logs
+
+During the investigation, we compressed the two large rotated logs:
+
+```bash
+sudo gzip /var/log/syslog.1 /var/log/kern.log.1
+```
+
+The resulting files were approximately:
+
+- `/var/log/syslog.1.gz` — 120 MB.
+- `/var/log/kern.log.1.gz` — 55 MB.
+
+The `/var/log` directory's reported usage fell from approximately 2.4 GB to approximately 722 MB, saving around 1.68 GB.
+
+These are the approximate results observed during the investigation.
+
+Compression changed how much storage the historical log contents required. It did not establish or fix the underlying cause of the messages recorded in those logs.
+
+We also inspected the remaining current logs, which were approximately:
+
+- `/var/log/syslog` — 26 MB.
+- `/var/log/kern.log` — 10 MB.
+
+The contrast between the large historical files and the smaller current files helped distinguish accumulated storage usage from the size of the current logs.
+
+### A key distinction
+
+**Compressing a log reduces storage consumption. It does not fix the event that the log records.**
+
+These are separate tasks:
+
+- Storage management addresses how much space log files consume.
+- Log analysis addresses what the recorded messages mean.
+- Troubleshooting addresses the underlying cause of a problem.
+
+They can inform each other, but they are not the same operation.
+
+
+# Quick Reference
+
+| Goal | Command |
+|---|---|
+| Current directory | `pwd` |
+| List files, including hidden entries | `ls -la` |
+| Inspect file metadata | `stat filename` |
+| Display inode number | `ls -i filename` |
+| Compare apparent and allocated file size | `stat filename` and `du -B1 filename` |
+| Check filesystem capacity | `df -h` |
+| Check inode capacity | `df -i` |
+| Summarize directory usage | `du -sh directory/` |
+| Find large files | `find /path -type f -size +100M -ls` |
+| List block devices | `lsblk -f` |
+| Inspect mounted filesystems | `findmnt` |
+| Find deleted-but-open files | `sudo lsof +L1` |
+| List Snap revisions | `snap list --all` |
+| Inspect current system log | `sudo less /var/log/syslog` |
+| Inspect current kernel log | `sudo less /var/log/kern.log` |
+| Inspect rotated logs | `ls -lh /var/log` |
+| Search for common error terms | `grep -iE 'error|failed|failure' logfile` |
+| Count identical matching lines | `sort logfile \| uniq -c` |
+| Inspect logrotate configuration | `cat /etc/logrotate.conf` |
+| Inspect rsyslog rotation rules | `cat /etc/logrotate.d/rsyslog` |
+
+For compressed historical logs, `zgrep` can search the contents without requiring manual decompression:
+
+```bash
+sudo zgrep -iE 'error|failed|failure' /var/log/syslog.1.gz
+```
+
+
+# Final Mental Model
+
+A filesystem is more than a collection of files and folders. It is a system of names, metadata, storage allocation and relationships between files and the processes using them.
+
+When investigating unexpected disk usage, remember:
+
+- A filename is not the same thing as an inode.
+- A file's logical size is not necessarily the same as its allocated storage.
+- A mounted filesystem is not the same thing as a physical disk.
+- Deleting a filename does not always immediately release its storage.
+- An installed application can retain older package revisions.
+- A log's size does not reveal whether its messages describe a current problem.
+- Historical logs help establish context; current logs help establish recency.
+- Counting repeated messages helps narrow the search, but timestamps and context are needed to interpret them.
+- Compression and cleanup reduce storage consumption; they do not necessarily fix the underlying cause.
+- Timers schedule work, while configuration rules determine what that work actually does.
+
+The most useful habit is to move systematically from **observation → evidence → hypothesis → verification → action → recheck**.
+
+That is the foundation of reliable filesystem investigation on Linux.
