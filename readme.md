@@ -46,7 +46,8 @@ gilfoyle/
 │
 ├── linux/
 │   ├── 01-foundations/
-│   │   └── session-01-users-groups-permissions.md
+│   │   ├── session-01-users-groups-permissions.md
+│   │   └── session-02-filesystems.md
 │   ├── 02-system-management/
 │   ├── 03-data-environment/
 │   └── 04-connectivity-automation/
