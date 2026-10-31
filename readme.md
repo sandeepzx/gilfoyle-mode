@@ -63,6 +63,9 @@ gilfoyle/
 │   └── 04-web-scale/
 │
 ├── dsa-algorithms/
+|   └──fundamentals/
+│       ├── big-o.md
+│       └── hashing-basics.md
 │
 ├── databases/
 │   ├── 01-fundamentals-design/
