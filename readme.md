@@ -65,7 +65,8 @@ gilfoyle/
 ├── dsa-algorithms/
 |   └──fundamentals/
 │       ├── big-o.md
-│       └── hashing-basics.md
+│       ├── hashing-basics.md
+│       └── arrays.md
 │
 ├── databases/
 │   ├── 01-fundamentals-design/
