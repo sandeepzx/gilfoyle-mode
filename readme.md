@@ -63,10 +63,13 @@ gilfoyle/
 │   └── 04-web-scale/
 │
 ├── dsa-algorithms/
-|   └──fundamentals/
-│       ├── arrays.md
-│       ├── big-o.md
-│       └── hashing-basics.md
+|   ├── fundamentals/
+│   │   ├── arrays.md
+│   │   ├── big-o.md
+│   │   └── hashing-basics.md
+|   └── problems/
+|       └── arrays/
+|           └── 01-two-sum.md
 │
 ├── databases/
 │   ├── 01-fundamentals-design/
